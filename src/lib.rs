@@ -1,7 +1,4 @@
-pub use pools::*;
+pub use worker_pool::worker_pool::*;
 
-mod pools;
-mod workers;
-mod tasks;
-mod types;
+mod worker_pool;
 

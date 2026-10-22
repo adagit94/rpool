@@ -1,13 +1,16 @@
-use std::{sync::{Arc, Mutex, mpsc::Receiver}, thread::{self as th, JoinHandle}};
+use std::{
+    sync::{Arc, Mutex, mpsc::Receiver},
+    thread::{self as th, JoinHandle},
+};
 
-use crate::tasks::BoxedTask;
+use crate::worker_pool::tasks::BoxedTask;
 
 type AtomicTaskReceiver = Arc<Mutex<Receiver<BoxedTask>>>;
 
-pub struct Worker ();
+pub(crate) struct Worker();
 
 impl Worker {
-    pub fn new(task: AtomicTaskReceiver) -> JoinHandle<fn()> {
+    pub(crate) fn new(task: AtomicTaskReceiver) -> JoinHandle<fn()> {
         return th::spawn(move || {
             loop {
                 let mg = task.lock().unwrap();

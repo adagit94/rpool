@@ -8,8 +8,8 @@ use std::{
 };
 
 use crate::{
-    tasks::{BoxedTask, IndexedTaskResult},
-    workers::Worker,
+    worker_pool::tasks::{BoxedTask, IndexedTaskResult},
+    worker_pool::worker::Worker,
 };
 
 type TaskQueue = Sender<BoxedTask>;
