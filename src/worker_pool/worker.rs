@@ -10,10 +10,10 @@ type AtomicTaskReceiver = Arc<Mutex<Receiver<BoxedTask>>>;
 pub(crate) struct Worker();
 
 impl Worker {
-    pub(crate) fn new(task: AtomicTaskReceiver) -> JoinHandle<fn()> {
+    pub(crate) fn new(r: AtomicTaskReceiver) -> JoinHandle<fn()> {
         return th::spawn(move || {
             loop {
-                let mg = task.lock().unwrap();
+                let mg = r.lock().unwrap();
                 let t = mg.recv();
 
                 drop(mg);
