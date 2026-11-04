@@ -97,7 +97,7 @@ pub trait WorkerPoolTrait {
     fn schedule_receive<R: Send + 'static>(
         &self,
         task: impl FnOnce() -> R + Send + UnwindSafe + 'static,
-    ) -> Result<Receiver<Result<R, ResultErr>>, ResultErr>;
+    ) -> Receiver<Result<R, ResultErr>>;
     fn schedule_many_receive_ordered<R: Send + 'static>(
         &self,
         tasks: Vec<impl FnOnce() -> R + Send + UnwindSafe + 'static>,
@@ -112,14 +112,12 @@ impl WorkerPoolTrait for WorkerPool {
     fn schedule_receive<R: Send + 'static>(
         &self,
         task: impl FnOnce() -> R + Send + UnwindSafe + 'static,
-    ) -> Result<Receiver<Result<R, ResultErr>>, ResultErr> {
+    ) -> Receiver<Result<R, ResultErr>> {
         let (s, r) = sync_chan::<Result<R, ResultErr>>(0);
 
-        if !self.send_task(self.box_task_with_result(task, s)) {
-            return Err(());
-        }
-
-        return Ok(r);
+        self.send_task(self.box_task_with_result(task, s));
+        
+        return r;
     }
 
     fn schedule_many_receive_ordered<R: Send + 'static>(
@@ -131,11 +129,7 @@ impl WorkerPoolTrait for WorkerPool {
         let mut indexed_results: Vec<IndexedTaskResult<R>> = Vec::with_capacity(tasks_count);
 
         for (i, t) in tasks.into_iter().enumerate() {
-            if !self
-                .send_task(self.box_task_with_result(move || IndexedTaskResult(i, t()), s.clone()))
-            {
-                return Err(());
-            }
+            self.send_task(self.box_task_with_result(move || IndexedTaskResult(i, t()), s.clone()));
         }
 
         for _ in 0..tasks_count {
