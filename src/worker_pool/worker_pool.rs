@@ -15,11 +15,13 @@ use crate::{
 type TaskQueue = Sender<BoxedTask>;
 type ResultErr = ();
 
+/// WorkerPool for a CPU bound tasks. Distribution is performed form a single, global queue implemented as unbounded channel.
 pub struct WorkerPool {
     queue: TaskQueue,
 }
 
 impl WorkerPool {
+    /// Create WorkerPool for a CPU bound tasks. If workers_count == 0, then count of workers is Max(thread::available_parallelism() - 1, 1).
     pub fn new(mut workers_count: usize) -> WorkerPool {
         if workers_count == 0 {
             workers_count = available_parallelism().unwrap().get();
@@ -93,11 +95,14 @@ impl WorkerPool {
 }
 
 pub trait WorkerPoolTrait {
+    /// Schedule task for execution. For task scheduling with receive of the result, see [`WorkerPool::schedule_receive`].
     fn schedule(&self, task: impl FnOnce() + Send + UnwindSafe + 'static);
+    /// Schedule task for execution with pre-created sync_channel of bound 0 to receive result on the receiver from executed task in case of success.
     fn schedule_receive<R: Send + 'static>(
         &self,
         task: impl FnOnce() -> R + Send + UnwindSafe + 'static,
     ) -> Receiver<Result<R, ResultErr>>;
+    /// Schedule multiple tasks with the same result value and receive their results in the same order as tasks were originally passed. Approach is transactive and returns all results or none (ResultErr indication) in case of failure of any of them.
     fn schedule_many_receive_ordered<R: Send + 'static>(
         &self,
         tasks: Vec<impl FnOnce() -> R + Send + UnwindSafe + 'static>,
