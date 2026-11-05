@@ -21,8 +21,8 @@ pub struct WorkerPool {
 }
 
 impl WorkerPool {
-    /// Create WorkerPool for a CPU bound tasks. If workers_count == 0, then count of workers is Max(thread::available_parallelism() - 1, 1).
-    pub fn new(mut workers_count: usize) -> WorkerPool {
+    /// Create WorkerPool for a CPU bound tasks. If workers_count == 0, then count of workers is max(thread::available_parallelism() - 1, 1).
+    pub fn new(mut workers_count: usize) -> Self {
         if workers_count == 0 {
             workers_count = available_parallelism().unwrap().get();
 
@@ -38,7 +38,7 @@ impl WorkerPool {
             Worker::new(rec.clone());
         }
 
-        return WorkerPool { queue: s };
+        return Self { queue: s };
     }
 
     fn box_task(&self, task: impl FnOnce() + Send + UnwindSafe + 'static) -> BoxedTask {
